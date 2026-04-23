@@ -26,7 +26,21 @@ actions:
     command: echo "deb [trusted=yes] https://raw.githubusercontent.com/Citronics/deb-packages/main stable main" | tee /etc/apt/sources.list.d/citronics.list
 
   - action: apt
-    packages: [initramfs-tools, citronics-initramfs, linux-firmware-lemon, linux-headers-6.12.0-citronics-lemon, linux-image-6.12.0-citronics-lemon]
+    packages: 
+      - initramfs-tools
+      - citronics-initramfs
+      - linux-firmware-lemon
+      - linux-headers-6.12.0-citronics-lemon
+      - linux-image-6.12.0-citronics-lemon
+      - retroarch
+      - mesa-utils
+      - xserver-xorg
+      - xinit 
+      - openbox
+      - x11-server-utils 
+      - python3-xdg 
+      - xinput
+
 
   - action: run
     chroot: true
@@ -48,9 +62,48 @@ actions:
     chroot: true
     command: update-initramfs -c -k 6.12.0-citronics-lemon
 
+  - action: run
+    chroot: true
+    command: |
+      # 1. Créer le dossier de config
+      mkdir -p /home/citro/.config/retroarch/cores
+      mkdir -p /home/citro/.config/retroarch/info
+
+      # 2. Générer le fichier de config avec tes paramètres
+      cat <<EOF > /home/citro/.config/retroarch/retroarch.cfg
+      video_driver = "gl"
+      video_context_driver = "x"
+      menu_driver = "xmb"
+      libretro_directory = "/home/citro/.config/retroarch/cores"
+      libretro_info_path = "/home/citro/.config/retroarch/info"
+      EOF
+
+      # 3. Donner les droits à citro
+      chown -R citro:citro /home/citro/.config/
+
+      cat <<EOF > /home/citro/.xinitrc
+      export XDG_RUNTIME_DIR=/run/user/\$(id -u)
+      xinput set-prop "ILI210x Touchscreen" "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1 &
+      xrandr --output DSI-1 --rotate right &
+      openbox-session &
+      sleep 1
+      exec retroarch
+      EOF
+
+
+
+      echo 'SUBSYSTEM=="drm", KERNEL=="card0", GROUP="video", MODE="0660"' > /etc/udev/rules.d/99-freedreno.rules
+
+      chown -R citro:citro /home/citro/
+
+      usermod -a -G video,render,audio,input citro
+
+
+  
+
   - action: image-partition
     imagename: {{ $image }}
-    imagesize: 750MB
+    imagesize: 1GB
     partitiontype: msdos
     mountpoints:
       - mountpoint: /
