@@ -1,4 +1,4 @@
-{{- $image := or .image "ubuntu-lemon.img" -}}
+{{- $image := or .image "retroarch-ubuntu-lemon.img" -}}
 
 architecture: armhf
 
@@ -27,19 +27,22 @@ actions:
 
   - action: apt
     packages: 
+
       - initramfs-tools
       - citronics-initramfs
       - linux-firmware-lemon
+      - software-properties-common
       - linux-headers-6.12.0-citronics-lemon
       - linux-image-6.12.0-citronics-lemon
       - retroarch
+      - console-setup
       - mesa-utils
-      - xserver-xorg
+      - xserver-xorg-legacy
       - xinit 
       - openbox
-      - x11-server-utils 
-      - python3-xdg 
-      - xinput
+      - x11-xserver-utils
+      - xserver-xorg
+      
 
 
   - action: run
@@ -69,18 +72,22 @@ actions:
       mkdir -p /home/citro/.config/retroarch/cores
       mkdir -p /home/citro/.config/retroarch/info
 
-      # 2. Générer le fichier de config avec tes paramètres
+      # 2. Création du retroarch.cfg avec certain parametres specifique. 
       cat <<EOF > /home/citro/.config/retroarch/retroarch.cfg
       video_driver = "gl"
       video_context_driver = "x"
       menu_driver = "xmb"
+      video_fullscreen = "true"  
       libretro_directory = "/home/citro/.config/retroarch/cores"
       libretro_info_path = "/home/citro/.config/retroarch/info"
+      assets_directory = "/usr/share/libretro/assets"
       EOF
 
       # 3. Donner les droits à citro
       chown -R citro:citro /home/citro/.config/
 
+
+      # setup du startx de x.org
       cat <<EOF > /home/citro/.xinitrc
       export XDG_RUNTIME_DIR=/run/user/\$(id -u)
       xinput set-prop "ILI210x Touchscreen" "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1 &
@@ -90,20 +97,60 @@ actions:
       exec retroarch
       EOF
 
+      cat <<EOF > /etc/X11/Xwrapper.config
+      allowed_users=anybody
+      needs_root_rights=yes
+      EOF
+
 
 
       echo 'SUBSYSTEM=="drm", KERNEL=="card0", GROUP="video", MODE="0660"' > /etc/udev/rules.d/99-freedreno.rules
 
       chown -R citro:citro /home/citro/
 
-      usermod -a -G video,render,audio,input citro
+      usermod -a -G video,render,audio,input,tty citro
+
+  
+  - action: run
+    chroot: true
+    command: |
+
+      cd /tmp
+      wget https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/qcom/a330_pm4.fw
+      wget https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/qcom/a330_pfp.fw
+      chmod 644 /tmp/a330*
+      mkdir -p /lib/firmware/qcom
+      mv /tmp/a330* /lib/firmware/qcom
+
+
+      add-apt-repository -y ppa:zhangsongcui3371/fastfetch
+
+      apt-get update
+      apt-get install -y fastfetch
+
+
+  - action: run
+    description: Configuration du clavier en Français
+    chroot: true
+    command: |
+      # Configure la disposition du clavier pour la console (TTY)
+      cat <<EOF > /etc/default/keyboard
+      XKBMODEL="pc105"
+      XKBLAYOUT="fr"
+      XKBVARIANT=""
+      XKBOPTIONS=""
+      BACKSPACE="guess"
+      EOF
+
+      # Applique la configuration pour que ce soit généré au boot
+      DEBIAN_FRONTEND=noninteractive dpkg-reconfigure console-setup
 
 
   
 
   - action: image-partition
     imagename: {{ $image }}
-    imagesize: 1GB
+    imagesize: 2GB
     partitiontype: msdos
     mountpoints:
       - mountpoint: /
