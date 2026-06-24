@@ -66,17 +66,6 @@ Go to the [Releases](https://github.com/TariqKalai/Retroarch-config-lemon/releas
 fastboot flash userdata sparse-retroarch-ubuntu-lemon.img
 ```
 
----
-
-## Default credentials
-
-| Field    | Value      |
-|----------|------------|
-| User     | `citro`    |
-| Password | `citronics` |
-| SSH      | enabled on boot |
-
----
 
 ## Based on
 
