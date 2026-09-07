@@ -54,7 +54,8 @@ fastboot flash userdata sparse-retroarch-ubuntu-lemon.img
 # 6. Restore dipswitch to host mode and reboot
 ```
 
-RetroArch launches automatically on first boot.
+To launch RetroArch :
+```bash startx ```
 
 ---
 
@@ -65,6 +66,9 @@ Go to the [Releases](https://github.com/TariqKalai/Retroarch-config-lemon/releas
 ```bash
 fastboot flash userdata sparse-retroarch-ubuntu-lemon.img
 ```
+
+To launch RetroArch :
+```bash startx ```
 
 
 ## Based on
