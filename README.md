@@ -55,7 +55,9 @@ fastboot flash userdata sparse-retroarch-ubuntu-lemon.img
 ```
 
 To launch RetroArch :
-```bash startx ```
+```bash 
+startx
+```
 
 ---
 
@@ -68,7 +70,9 @@ fastboot flash userdata sparse-retroarch-ubuntu-lemon.img
 ```
 
 To launch RetroArch :
-```bash startx ```
+```bash 
+startx
+ ```
 
 
 ## Based on
